@@ -1,0 +1,28 @@
+name: QQQ historical backfill and daily update
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 12 * * *"
+permissions:
+  contents: write
+concurrency:
+  group: qqq-data-update
+  cancel-in-progress: false
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install longport
+      - name: Backfill and push
+        env:
+          LONGPORT_APP_KEY: ${{ secrets.LONGPORT_APP_KEY }}
+          LONGPORT_APP_SECRET: ${{ secrets.LONGPORT_APP_SECRET }}
+          LONGPORT_ACCESS_TOKEN: ${{ secrets.LONGPORT_ACCESS_TOKEN }}
+        run: python scripts/update_qqq.py --max-days 800 --push
